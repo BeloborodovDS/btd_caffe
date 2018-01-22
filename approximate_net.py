@@ -78,7 +78,7 @@ def decompose2abc(conv, s, t, r):
 	b_param.num_output = t
 	b_param.group = r
 	# 3rd
-	c = _create_new(conv.name + 'c')
+	c = _create_new(conv.name)
 	del(c.bottom[:])
 	c.bottom.extend(b.top)
 	c_param = c.convolution_param
@@ -122,9 +122,9 @@ def approximate_params(netdef, params, approx_netdef, approx_params,
 		# set kernel to low-rank model
 		net_approx.params[conv + 'a'][0].data[...] = kernel_a
 		net_approx.params[conv + 'b'][0].data[...] = kernel_b
-		net_approx.params[conv + 'c'][0].data[...] = kernel_c
+		net_approx.params[conv][0].data[...] = kernel_c
 		# copy bias to low-rank model
-		net_approx.params[conv + 'c'][1].data[...] = bias
+		net_approx.params[conv][1].data[...] = bias
 	net_approx.save(approx_params)
 
 
