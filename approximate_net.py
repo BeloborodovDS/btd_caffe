@@ -30,9 +30,10 @@ def create_approx_netdef(input_file, output_file, btd_config):
 		net = NetParameter()
 		txtf.Merge(fp.read(), net)
 	new_layers = []
- 	rename = defaultdict(lambda x: x)
+ 	rename = dict()
 	for layer in net.layer:	
 		if not layer.name in btd_config.keys():
+			rename[layer.name] = layer.name
 			tops = [rename[e] for e in layer.top]
    			del(layer.top[:])
    			layer.top.extend(tops)
