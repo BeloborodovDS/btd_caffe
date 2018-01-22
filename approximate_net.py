@@ -11,6 +11,8 @@ from pci import pci
 from sktensor import dtensor
 from argparse import ArgumentParser
 
+from collections import defaultdict
+
 
 # load parameters for btd
 def load_config(config_file):
@@ -28,12 +30,20 @@ def create_approx_netdef(input_file, output_file, btd_config):
 		net = NetParameter()
 		txtf.Merge(fp.read(), net)
 	new_layers = []
+ 	rename = defaultdict(lambda x: x)
 	for layer in net.layer:	
 		if not layer.name in btd_config.keys():
+			tops = [rename[e] for e in layer.top]
+   			del(layer.top[:])
+   			layer.top.extend(tops)
+			bottoms = [rename[e] for e in layer.bottom]
+   			del(layer.bottom[:])
+   			layer.bottom.extend(bottoms)
 			new_layers.append(layer)
 			continue
+		rename[layer.name] = layer.name + 'c'
 		s, t, r = btd_config[layer.name]
-		a, b, c = decompose2abc(layer, s, t, r)
+		a, b, c = decompose2abc(layer, s, t, r)        
 		new_layers.extend([a, b, c])
 	new_net = NetParameter()
 	new_net.CopyFrom(net)
@@ -78,9 +88,13 @@ def decompose2abc(conv, s, t, r):
 	b_param.num_output = t
 	b_param.group = r
 	# 3rd
-	c = _create_new(conv.name)
+	c = _create_new(conv.name + 'c')
 	del(c.bottom[:])
 	c.bottom.extend(b.top)
+	#HERE
+ 	del(c.top[:])
+  	c.top.extend([c.name])
+   
 	c_param = c.convolution_param
 	del(c_param.kernel_size[:])
 	c_param.kernel_size.extend([1])
@@ -122,9 +136,9 @@ def approximate_params(netdef, params, approx_netdef, approx_params,
 		# set kernel to low-rank model
 		net_approx.params[conv + 'a'][0].data[...] = kernel_a
 		net_approx.params[conv + 'b'][0].data[...] = kernel_b
-		net_approx.params[conv][0].data[...] = kernel_c
+		net_approx.params[conv + 'c'][0].data[...] = kernel_c
 		# copy bias to low-rank model
-		net_approx.params[conv][1].data[...] = bias
+		net_approx.params[conv + 'c'][1].data[...] = bias
 	net_approx.save(approx_params)
 
 
