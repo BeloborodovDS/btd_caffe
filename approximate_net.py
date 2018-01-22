@@ -31,13 +31,17 @@ def create_approx_netdef(input_file, output_file, btd_config):
 		txtf.Merge(fp.read(), net)
 	new_layers = []
  	rename = dict()
+ 	def rename_dct(e, dct):
+		if e in dct.keys():
+   			return dct[e]
+		else:
+   			return e
 	for layer in net.layer:	
 		if not layer.name in btd_config.keys():
-			rename[layer.name] = layer.name
-			tops = [rename[e] for e in layer.top]
+			tops = [rename_dct(e, rename) for e in layer.top]
    			del(layer.top[:])
    			layer.top.extend(tops)
-			bottoms = [rename[e] for e in layer.bottom]
+			bottoms = [rename_dct(e, rename) for e in layer.bottom]
    			del(layer.bottom[:])
    			layer.bottom.extend(bottoms)
 			new_layers.append(layer)
